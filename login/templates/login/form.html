@@ -1,0 +1,121 @@
+{% block content %}
+{% comment %}
+
+To display image load static like
+{% load static %}
+and set image url like
+img="{% static '/worldmap/js/main.js'%}"
+
+{% endcomment %}
+
+<html> 
+<head>
+	<title> {{title}} </title> 
+
+	{% load static %}
+    <link href="{% static 'login/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'login/css/login.css' %}" rel="stylesheet">
+  
+<style>
+.register {
+	text-align: center;
+	padding: 0px;
+	font-size: 20px;
+	font-weight: bold;
+
+}
+.button .django-submit {
+	padding:		10px 30px ;
+	font-size:		14px !important;
+	background-color:	#393e44;
+	color:			white;
+	width: 50%;
+	text-align: center;
+}
+
+.container1 {
+    margin: auto;
+	text-align: center;
+	opacity: 0.8;
+	border-radius: 25px;
+    background: #369636;
+    padding: 20px; 
+    width: 400px;
+    height: 500px;
+    font-size: 20px;
+    color: white;
+}
+img{
+	padding-top: 50px;
+	display: block;
+    margin: auto;
+    width: 10%;
+}
+input{
+	color: black;
+}
+
+</style>
+
+ </head>
+
+ <body>
+<div class = "back">
+ 	<div class="conatiner row col-md-4"></div>
+
+ 	    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- banner consistant with the rest of the code -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color:white">Daintree Login</a>
+
+            </div>
+        </div>
+    </nav>
+ </br>
+</br>
+{% load staticfiles %}
+<script type="text/javascript" src="{% static 'js/jquery.min.js' %}"></script>
+
+
+<div id="yourID" class="yourClass">
+    <img src="{% static 'login/img/leaf.png' %}" alt="something" >
+</div>
+<div class= "container1">
+	<h1 style = "vertical-align: top; text-color = #b0b3b7">Login</h1> 
+
+
+</br>
+</br>
+</br>
+
+	<form method = 'POST' action = '' enctype='multipart/form-data'> 
+		{% csrf_token %}
+		{{form.as_p}}
+
+<div class = "button"><input type = "submit" class="django-submit" value= "LOGIN"/></div>
+
+{% if form.subject.errors %}
+    {% for error in form.subject.errors %}
+        {{ error|escape }}
+    {% endfor %}
+  
+{% endif %}
+
+</form>
+{% endblock content %}
+</div>
+
+<div class = "register"><p> Don't have an account? <a href="{% url 'login:register' %}">Register here!</a></p></div>
+
+</div>
+  </body>
+
+
+</html> 

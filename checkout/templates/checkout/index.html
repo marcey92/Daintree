@@ -1,0 +1,235 @@
+
+<head>
+    <title>Daintree | Checkout</title>
+    {% load static %}
+    <link href="{% static 'shopping/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'shopping/css/shop-homepage.css' %}" rel="stylesheet">
+    <script src="{% static 'shopping/js/jquery.js' %}"></script>
+    <script src="{% static 'shopping/js/bootstrap.min.js' %}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        //gets token for the user
+        $.ajaxSetup({ 
+            beforeSend: function(xhr, settings) {
+                function getCookie(name) {
+                    var cookieValue = null;
+                    if (document.cookie && document.cookie != '') {
+                        var cookies = document.cookie.split(';');
+                        for (var i = 0; i < cookies.length; i++) {
+                            var cookie = jQuery.trim(cookies[i]);
+                            if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+                if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                }
+            } 
+        });
+    </script>
+    <style>
+        img {width:125px;
+             height:125px}
+
+        .loader {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" style="color:white">Daintree</a>
+                <p class="navbar-text" style="margin-left: 50px">Signed in as <b>{{ username }}</b></p>
+
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="{% url 'shoppingView' %}" style="margin-right: 50px" >Shopping</a></li>  
+                <li><a href="{% url 'login:logout' %}" >Logout</a></li>
+              </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+    <!-- Page Content -->
+    <div class = "container">
+            <div id="basketNotif" class="alert alert-success" role="alert" style="text-align:center; display:none;">Updated</div>
+            <div class="row">
+                <div class="col-md-3">
+                    <p class="lead">Checkout</p>
+                </div>
+            </div>
+            <p id="notification"><p>
+            {% if empty is False %}
+            <!--Basket-->
+            <div id="baskey_table">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Product</th>
+                        <th></th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>     </th>
+                    </tr>
+                {% for item in basket_list %}
+                    <tr id="col_{{item.item.id}}">
+                        <td><img src="{% static ''%}{{item.item.image_url}}"></td>
+                        <td> {{item.item.name}}</td>
+                        <td>£{{item.item.price}}</td>
+                        <td><input type="number" step=1 id="input_{{item.item.id}}" value="{{item.quantity}}" min="1" max="1000" onClick="remove_col_error({{item.item.id}})" ></td>
+                        <td><button id="update_{{item.item.id}}" class="btn btn-warning" onClick="update_quantity({{item.item.id}})">update</button>
+                            <button id="remove_{{item.item.id}}" class="btn btn-danger btn-md" onClick="remove_click({{item.item.id}})">remove</button></td>
+                    </tr>
+                {% endfor %}
+                </table>
+
+                <!--Payment-->
+                <h4 id="total"></h4>
+                <div class="row">
+                    <div id="pay_div" class="col-md-1">
+                        <button id="pay" class="btn btn-success" onClick="pay_click()">Pay</button>   
+                    </div>
+                </div>
+                
+            </div>
+            {% endif %}
+    </div>
+    <!-- /.container -->    
+</body>
+
+<script>
+    $(document).ready(function(){
+        // when document loaded update total
+        update_total()
+    }) 
+    $("[type='number']").keypress(function (evt) {
+        // prevent number being typed
+        evt.preventDefault();
+    });
+    function remove_click(id){
+        // remove item from basket
+        // updates total
+        $.ajax({
+            url: "remove",
+            type: 'POST',
+            async: true,
+            data: {'item_id': id},
+            timeout: 10000,
+            error: function(){
+                // notify error
+                $('#col_error_'+id).text(" error: something went wrong");
+            },
+            success: function(msg){ 
+                // remove item from list and notifiy 
+                $('#col_'+id).remove();
+                update_total();
+            }
+        })
+    }
+    function update_quantity(id){
+        // updates quantity in basket and updates total
+        var new_q = $('#input_'+id).val();
+        $.ajax({
+            url: "update",
+            type: 'POST',
+            async: true,
+            data: {'item_id': id,
+                   'new_quantity':new_q
+            },
+            timeout: 10000,
+            error: function(){
+                // notify error
+                $('#notification').text(" error: something went wrong");
+            },
+            success: function(msg){ 
+                // notify update
+                $('#notification').text(" updated");
+                // showing top bar notification
+                $('#basketNotif').slideDown();
+                $(function(){
+                    function hideNotif(){
+                    $("#basketNotif").slideUp();
+                    };
+                    window.setTimeout( hideNotif, 3000 ); // 3 seconds
+                });
+                update_total();
+            }
+        })
+    }
+    function update_total(){
+        // gets new total
+        // updates total on html
+        $.ajax({
+            url: "total",
+            type: 'POST',
+            async: true,
+            timeout: 10000,
+            error: function(){
+                $('#notification').text("Error:Something went wrong");
+            },
+            success: function(msg){
+                var total = msg.total;
+                $('#total').text('Total: £' + total);
+                if(total == 0){   
+                    $('#baskey_table').remove();
+                    $('#notification').text('No items in basket');
+                }
+            }
+        })
+    }
+    function pay_click(){
+        // sends request to pay
+        $('#pay_div').empty();
+        $('#pay_div').html('<div class="loader"></div>');
+        //$('#pay_div').html('<button class="btn btn-warning")"><span class="glyphicon glyphicon-repeat" aria-hidden="true"></span></button>');
+        $.ajax({
+            url: "pay",
+            type: 'POST',
+            async: true,
+            timeout: 10000,
+            error: function(){
+                // notify error
+                $('#notification').text("Error:Something went wrong");
+                $('#pay_div').empty();
+                $('#pay_div').html('<button id="pay" class="btn btn-success" onClick="pay_click()">Pay</button>');
+            },
+            success: function(msg){
+                // remove all items from list
+                // notifies success
+                $('#pay_div').empty();
+                $('#baskey_table').remove();
+                $('#notification').text("Thank you your order has gone through");
+            }
+        })
+    }
+    function remove_col_error(id){
+        // removes error message
+        $('#notification').text("");
+    }
+</script>
